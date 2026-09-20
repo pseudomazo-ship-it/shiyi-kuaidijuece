@@ -570,9 +570,10 @@ function makeDecision(province, city, weight, mode){
     const minPrice = prices[priceLeader];
     const ztoPrice = prices['中通'];
     const ztoDiff = (ztoPrice !== null && minPrice !== null) ? roundMoney(ztoPrice - minPrice) : null;
-    if(ztoDiff !== null && ztoDiff > 0 && ztoDiff <= 0.20){
+    const hbAround = HB_AROUND.has(province);
+    if(ztoDiff !== null && ztoDiff > 0 && ztoDiff <= 0.20 && !hbAround){
       courier = '中通'; reason = '中通比最低价高' + ztoDiff.toFixed(2) + '元（≤0.20元），优选中通'; policy = 'zto';
-    } else if(ztoDiff === null || ztoDiff > 0.20){
+    } else if(ztoDiff === null || ztoDiff > 0.20 || (hbAround && ztoDiff > 0)){
       const xy = decideXiangyang(prices, sla, province, 1, priceLeader);
       courier = xy.courier; reason = xy.reason; policy = xy.policy;
     } else if(sla && prices['邮政'] !== null && prices['邮政'] === prices[priceLeader]){
@@ -625,7 +626,7 @@ function weightLabel(weight){
 function renderNotice(){
   const notice = document.getElementById('modeNotice');
   if(state.mode === 1){
-    notice.innerHTML = '<strong>板块一规则</strong><span>不强制指定快递：三家先比较价格；中通比最低价贵不超过0.20元时优选中通；中通排除后，圆通比邮政贵不超过0.20元时优选圆通；价格并列时，已提供邮政时效的北京、上海、广州、深圳优先邮政。其他地区按最低价推荐。</span>';
+    notice.innerHTML = '<strong>板块一规则</strong><span>不强制指定快递：三家先比较价格；中通比最低价贵不超过0.20元时优选中通（湖北及周边省份——湖北/湖南/江西/安徽/河南/陕西/重庆——除外，这7省不适用中通微差优先）；中通排除后，圆通比邮政贵不超过0.20元时优选圆通；价格并列时，已提供邮政时效的北京、上海、广州、深圳优先邮政。其他地区按最低价推荐。</span>';
   }else{
     notice.innerHTML = '<strong>板块二规则</strong><span>中通已完全排除。湖北、湖南、江西、安徽、河南、陕西、重庆优先邮政；非周边省圆通比邮政贵不超过0.20元时优选圆通；北京、上海、深圳按邮政3天内，广州按邮政2天内；其他地区按圆通与邮政低价优先。</span>';
   }
@@ -786,7 +787,7 @@ function renderRules(){
   const rules = state.mode === 1 ? [
     ['三网参与','广西云仓中通、襄阳仓圆通、邮政'],
     ['默认条件','不强制指定快递，三家可用时优先选择最低价'],
-    ['中通微差优先','中通比最低价贵≤0.20元时，优选中通'],
+    ['中通微差优先','中通比最低价贵≤0.20元时，优选中通（湖北及周边7省除外，周边按最低价）'],
     ['圆通微差优先','中通排除后，圆通比邮政贵≤0.20元时，优选圆通'],
     ['价格并列','北京、上海、广州、深圳按已知邮政时效优先'],
     ['本地仓成本','圆通、邮政均在表价基础上加0.30元'],
